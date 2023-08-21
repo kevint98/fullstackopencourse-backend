@@ -16,9 +16,23 @@ mongoose
     console.log("error connecting to MongoDB:", error.message);
   });
 
+const validator = (value) => {
+  return /\d{2,3}-\d{5,}/.test(value);
+};
+
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
+  name: {
+    type: String,
+    minLength: 3,
+  },
+  number: {
+    type: String,
+    validate: {
+      validator: validator,
+      message:
+        "Number must have length of at least 8, formatted as XX(X)-XXXXX ",
+    },
+  },
 });
 
 personSchema.set("toJSON", {
