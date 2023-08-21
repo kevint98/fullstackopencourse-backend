@@ -40,7 +40,7 @@ app.get("/api/persons/:id", (request, response) => {
 
 app.delete("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndRemove(request.params.id)
-    .then((result) => {
+    .then(() => {
       response.status(204).end();
     })
     .catch((error) => {
@@ -82,11 +82,9 @@ app.put("/api/persons/:id", (request, response, next) => {
       if (updatedPerson) {
         response.json(updatedPerson);
       } else {
-        response
-          .status(404)
-          .send({
-            error: `Information for ${person.name} has already been removed from server`,
-          });
+        response.status(404).send({
+          error: `Information for ${person.name} has already been removed from server`,
+        });
       }
     })
     .catch((error) => next(error));
