@@ -273,6 +273,38 @@ describe("creating a new blog", () => {
 	});
 });
 
+describe("deleting a single blog", () => {
+	test("succeeds if a valid id is provided", async () => {
+		const blogsAtStart = await listHelper.blogsInDb();
+
+		const blogToDelete = blogsAtStart[0];
+
+		await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+
+		const blogsAtEnd = await listHelper.blogsInDb();
+
+		expect(blogsAtEnd).toHaveLength(listHelper.initialBlogs.length - 1);
+	});
+});
+
+describe("updating a single blog", () => {
+	test("succeeds when changing the number of likes", async () => {
+		const blogsAtStart = await listHelper.blogsInDb();
+		const blogToUpdate = blogsAtStart[0];
+
+		await api
+			.put(`/api/blogs/${blogToUpdate.id}`)
+			.send({ likes: 70 })
+			.expect(200);
+
+		const blogsAtEnd = await listHelper.blogsInDb();
+
+		const likes = blogsAtEnd.map((b) => b.likes);
+
+		expect(likes).toContain(70);
+	});
+});
+
 afterAll(async () => {
 	await mongoose.connection.close();
 });
