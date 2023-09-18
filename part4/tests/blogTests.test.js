@@ -191,82 +191,86 @@ describe("favourite blog", () => {
 	});
 });
 
-test("correct number of blogs are returned as json", async () => {
-	const response = await api
-		.get("/api/blogs")
-		.expect(200)
-		.expect("Content-Type", /application\/json/);
+describe("when viewing saved blogs", () => {
+	test("the correct number of blogs are returned as json", async () => {
+		const response = await api
+			.get("/api/blogs")
+			.expect(200)
+			.expect("Content-Type", /application\/json/);
 
-	expect(response.body).toHaveLength(listHelper.initialBlogs.length);
+		expect(response.body).toHaveLength(listHelper.initialBlogs.length);
+	});
+
+	test("the unique identifier property of the blog posts is named id", async () => {
+		const response = await api
+			.get("/api/blogs")
+			.expect(200)
+			.expect("Content-Type", /application\/json/);
+
+		const blogIds = response.body.map((r) => r.id);
+
+		expect(blogIds[0]).toBeDefined();
+	});
 });
 
-test("the unique identifier property of the blog posts is named id", async () => {
-	const response = await api
-		.get("/api/blogs")
-		.expect(200)
-		.expect("Content-Type", /application\/json/);
+describe("creating a new blog", () => {
+	test("succeeds with valid data", async () => {
+		const newBlog = {
+			title: "This is a new blog",
+			author: "New Author",
+			url: "www.url.com",
+			likes: 6,
+		};
 
-	const blogIds = response.body.map((r) => r.id);
+		await api
+			.post("/api/blogs")
+			.send(newBlog)
+			.expect(201)
+			.expect("Content-Type", /application\/json/);
 
-	expect(blogIds[0]).toBeDefined();
-});
+		const blogsAtEnd = await listHelper.blogsInDb();
 
-test("a new blog post can be created", async () => {
-	const newBlog = {
-		title: "This is a new blog",
-		author: "New Author",
-		url: "www.url.com",
-		likes: 6,
-	};
+		expect(blogsAtEnd).toHaveLength(listHelper.initialBlogs.length + 1);
+	});
 
-	await api
-		.post("/api/blogs")
-		.send(newBlog)
-		.expect(201)
-		.expect("Content-Type", /application\/json/);
+	test("defaults number of likes to 0 if like property is missing", async () => {
+		const newBlog = {
+			title: "This is a new blog",
+			author: "New Author",
+			url: "www.url.com",
+		};
 
-	const blogsAtEnd = await listHelper.blogsInDb();
+		await api
+			.post("/api/blogs")
+			.send(newBlog)
+			.expect(201)
+			.expect("Content-Type", /application\/json/);
 
-	expect(blogsAtEnd).toHaveLength(listHelper.initialBlogs.length + 1);
-});
+		const blogsAtEnd = await listHelper.blogsInDb();
 
-test("blog likes defaults to 0 if like property is missing", async () => {
-	const newBlog = {
-		title: "This is a new blog",
-		author: "New Author",
-		url: "www.url.com",
-	};
+		const likes = blogsAtEnd.map((b) => b.likes);
+		const likeToView = likes[likes.length - 1];
 
-	await api
-		.post("/api/blogs")
-		.send(newBlog)
-		.expect(201)
-		.expect("Content-Type", /application\/json/);
+		expect(likeToView).toBe(0);
+	});
 
-	const blogsAtEnd = await listHelper.blogsInDb();
+	test("fails with 400 status code if blog title is missing", async () => {
+		const newBlog = {
+			author: "New Author",
+			url: "www.url.com",
+		};
 
-	const likes = blogsAtEnd.map((b) => b.likes);
-	const likeToView = likes[likes.length - 1];
+		await api.post("/api/blogs").send(newBlog).expect(400);
+	});
 
-	expect(likeToView).toBe(0);
-});
+	test("fails with 400 status code if blog url is missing", async () => {
+		const newBlog = {
+			title: "This is a new blog",
+			author: "New Author",
+		};
 
-test("blogs without a title will not be saved", async () => {
-	const newBlog = {
-		author: "New Author",
-		url: "www.url.com",
-	};
-
-	await api.post("/api/blogs").send(newBlog).expect(400);
-});
-
-test("blogs without a url will not be saved", async () => {
-	const newBlog = {
-		title: "This is a new blog",
-		author: "New Author",
-	};
-
-	await api.post("/api/blogs").send(newBlog).expect(400);
+		await api.post("/api/blogs").send(newBlog).expect(400);
+	});
 });
 
 afterAll(async () => {
