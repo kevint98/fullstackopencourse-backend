@@ -18,6 +18,26 @@ const errorHandler = (error, request, response, next) => {
   next(error);
 };
 
+const tokenExtractor = (request, response, next) => {
+  const authorization = request.get("authorization");
+  if (authorization) {
+    if (authorization.startsWith("Bearer ")) {
+      request.token = authorization.replace("Bearer ", "");
+    } else {
+      request.token = request.body.token || request.query.token;
+    }
+
+    if (!request.token) {
+      return response
+        .status(403)
+        .send("A token is required for authentication");
+    }
+  }
+
+  next();
+};
+
 module.exports = {
   errorHandler,
+  tokenExtractor,
 };
